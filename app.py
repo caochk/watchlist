@@ -1,10 +1,36 @@
 from flask import Flask, render_template
+from flask_sqlalchemy import SQLAlchemy
+import os
+import sys
+import click
 
 app = Flask(__name__)
 
+# 数据库准备工作
+WIN = sys.platform.startswith('win')
+if WIN:  # 若为Windows系统，配置变量中关于数据库路径须如此开头
+    prefix = 'sqlite:///'
+else:
+    prefix = 'sqlite:////'
 
-@app.route('/')
-def index():
+app.config['SQLALCHEMY_DATABASE_URI'] = prefix + os.path.join(app.root_path, 'data.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 关闭对模型修改的监控
+db = SQLAlchemy(app)  # 在扩展类实例化之前加载写好的配置
+
+# 创建数据库模板类
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+class Movie(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(60))
+    year = db.Column(db.String(4))
+
+@app.cli.command()
+def forge():
+    '''自定义命令：生成虚拟数据'''
+    db.create_all()  # 创建数据库
+
     name = 'Jason Cao'
     movies = [
         {'title': 'My Neighbor Totoro', 'year': '1988'},
@@ -18,7 +44,19 @@ def index():
         {'title': 'WALL-E', 'year': '2008'},
         {'title': 'The Pork of Music', 'year': '2012'},
     ]
-    return render_template('index.html', name=name, movies=movies)
+    user = User(name=name)
+    db.session.add(user)
+    for m in movies:
+        movie = Movie(title=m['title'], year=m['year'])
+        db.session.add(movie)  # 将新创建的记录添加到数据库会话
+    db.session.commit()  # 提交记录
+    click.echo('Done!')  # 输出一个信息
+
+@app.route('/')
+def index():
+    user = User.query.first()
+    movies = Movie.query.all()
+    return render_template('index.html', user=user, movies=movies)
 
 if __name__ == '__main__':
     app.run(debug=True)
