@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Edit item</h3>
+<form method="post">
+    <label for="name">Name</label>
+    <input type="text" name="title" id="name" autocomplete="off" required value="{{ movie.title }}">{# name属性在request.form.get里用上 #}
+    <label for="year">Year</label>
+    <input type="text" name="year" id="year" autocomplete="off" required value="{{ movie.year }}">
+    <input class="btn" type="submit" name="submit" value="Update">
+    {% for message in get_flashed_messages() %}
+            <div class="alert">{{ message }}</div>
+    {% endfor %}
+
+</form>
+{% endblock %}

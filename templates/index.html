@@ -1,12 +1,33 @@
 {% extends 'base.html' %}
 {% block content %}
+    <br>
+    {#  表单获取用户输入  #}
+    {#  该表单用于让用户提交电影与年份记录  #}
+    <form method="post">
+        {#  label用于形成点击文字就能激活相应输入框  #}
+        <label for="name">Name</label>
+{#    通过在<input>元素内添加required属性实现的验证（客户端验证）并不完全可靠，我们还要在服务器端追加验证    #}
+        <input type="text" name="title" id="name" autocomplete="off" required>
+        <label for="year">Year</label>
+        <input type="text" name="year" id="year" autocomplete="off" required>
+        <input class="btn" type="submit" name="submit" value="Add">
+        {# 闪现消息的位置也是随意的，放在这里正合适 #}
+        {% for message in get_flashed_messages() %}
+            <div class="alert">{{ message }}</div>
+        {% endfor %}
+    </form>
 {#	使用	length	过滤器获取	movies	变量的长度	#}
 <p>{{movies|length}} Titles</p>
 <ul class="movie-list">
     {% for movie in movies %}	{#	迭代	movies	变量	#}
     <li>{{movie.title}}-{{movie.year}}	{#	等同于movie['title']	#}
+        {# w为了让三个按钮位于同一行，将它们放在一个行内容器中 #}
         <span class="float-right">
-            <a class="imdb" href="https://www.imdb.com/find?q={{ movie.title }}" target="_blank" title="Find this movie on IMDB">IMDb</a>
+            <form class="inline-form" method="post" action="{{ url_for('delete', movie_id=movie.id) }}">
+                <a class="imdb" href="https://www.imdb.com/find?q={{ movie.title }}" target="_blank" title="Find this movie on IMDB">IMDb</a>
+                <input class="btn" type="submit" name="delete" value="Delete" onclick="return confirm('Are you sure?')">
+                <a class="btn" href="{{ url_for('edit', movie_id=movie.id) }}">Edit</a> {# 点击编辑按钮，跳转到edit目录，并带有movie_id参数 #}
+            </form>
         </span>
     </li>
     {% endfor %}	{#	使用	endfor	标签结束	for	语句	#}
